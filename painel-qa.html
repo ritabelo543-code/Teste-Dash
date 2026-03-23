@@ -4,899 +4,218 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QA Intelligence Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Syne:wght@800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
-:root{
-  --bg:#EFF3F8;--card:#fff;--border:#E2E8F0;
+:root {
+  --bg:#EFF3F8;--card:#FFFFFF;--border:#E2E8F0;
   --navy:#0C2340;--navy-mid:#163556;--navy-light:#1E4473;
-  --accent:#0369A1;--accent-bright:#0EA5E9;--accent-light:#E0F2FE;
-  --ok:#047857;--ok-mid:#059669;--ok-light:#D1FAE5;
-  --err:#B91C1C;--err-mid:#DC2626;--err-light:#FEE2E2;
-  --teal:#0F766E;--teal-light:#CCFBF1;
-  --purple:#6D28D9;--purple-light:#EDE9FE;
-  --ref:#F59E0B;
-  --txt:#0F172A;--txt2:#334155;--muted:#64748B;--faint:#94A3B8;
-  --grid:#E8EEF5;
-  --r:14px;--rs:9px;--rx:6px;
+  --accent:#0369A1;--success:#047857;--danger:#B91C1C;--purple:#6D28D9;
+  --text-primary:#0F172A;--text-muted:#64748B;
+  --radius:14px;--shadow-sm:0 1px 4px rgba(0,0,0,0.06);
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased}
-
-/* ── HEADER ── */
-.hdr{background:linear-gradient(135deg,var(--navy),var(--navy-mid) 55%,var(--navy-light));
-  padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 4px 20px rgba(0,0,0,0.18);position:sticky;top:0;z-index:200}
-.hdr-l{display:flex;align-items:center;gap:12px}
-.hdr-ico{width:38px;height:38px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.18);
-  border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
-.hdr-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;line-height:1}
-.hdr-sub{font-size:10.5px;color:rgba(255,255,255,0.48);margin-top:2px}
-.hdr-r{display:flex;align-items:center;gap:8px}
-.ts{text-align:right;margin-right:4px}
-.ts-lbl{font-size:9.5px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.7px}
-.ts-val{font-size:11.5px;font-weight:600;color:rgba(255,255,255,0.7)}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rs);
-  font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;
-  transition:all .18s;white-space:nowrap}
-.btn-g{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.2)}
-.btn-g:hover{background:rgba(255,255,255,0.18)}
-.btn-e{background:var(--ok-mid);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,0.35)}
-.btn-e:hover{background:var(--ok)}
-
-/* ── MAIN ── */
-.main{padding:20px 24px 30px;max-width:1680px;margin:0 auto}
-
-/* ── FILTROS ── */
-.fwrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:13px 16px;margin-bottom:16px;display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;
-  box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
-.fg-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
-.fi{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:var(--rx);
-  font-size:12.5px;font-family:'DM Sans',sans-serif;color:var(--txt);background:#F8FAFC;outline:none;
-  transition:border-color .18s,background .18s}
-.fi:focus{border-color:var(--accent-bright);background:#fff}
-.fdiv{width:1px;height:32px;background:var(--border);flex-shrink:0;align-self:flex-end}
-.ms-wrap{position:relative;flex:1;min-width:120px}
-.ms-disp{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:var(--rx);
-  font-size:12.5px;font-family:'DM Sans',sans-serif;color:var(--txt);background:#F8FAFC;
-  cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-  transition:border-color .18s;user-select:none}
-.ms-disp:hover,.ms-disp.open{border-color:var(--accent-bright);background:#fff}
-.ms-arr{color:var(--muted);font-size:9px;transition:transform .18s}
-.ms-disp.open .ms-arr{transform:rotate(180deg)}
-.ms-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;
-  border:1px solid var(--border);border-radius:var(--rs);box-shadow:0 4px 16px rgba(0,0,0,0.08);
-  z-index:100;display:none;overflow:hidden;max-height:220px;overflow-y:auto}
-.ms-dd.open{display:block}
-.ms-opt{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;font-size:12.5px;transition:background .12s}
-.ms-opt:hover{background:var(--accent-light)}
-.ms-opt input{accent-color:var(--accent-bright);width:13px;height:13px;flex-shrink:0}
-.btn-rst{height:34px;padding:0 13px;background:#F1F5F9;color:var(--txt2);border:1px solid var(--border);
-  border-radius:var(--rx);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;
-  transition:all .18s;white-space:nowrap}
-.btn-rst:hover{background:#E2E8F0}
-
-/* ── KPI ── */
-.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:16px}
-.kcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:16px 16px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);position:relative;overflow:hidden;
-  transition:box-shadow .2s,transform .2s;cursor:default}
-.kcard:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08);transform:translateY(-2px)}
-.kbar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
-.kb-blue{background:linear-gradient(90deg,var(--accent),var(--accent-bright))}
-.kb-ok{background:linear-gradient(90deg,var(--ok),var(--ok-mid))}
-.kb-err{background:linear-gradient(90deg,var(--err),var(--err-mid))}
-.kb-teal{background:linear-gradient(90deg,var(--teal),#14B8A6)}
-.kb-pur{background:linear-gradient(90deg,var(--purple),#8B5CF6)}
-.kico{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;
-  font-size:14px;margin-bottom:10px}
-.ki-blue{background:var(--accent-light)}.ki-ok{background:var(--ok-light)}
-.ki-err{background:var(--err-light)}.ki-teal{background:var(--teal-light)}.ki-pur{background:var(--purple-light)}
-.klbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:4px}
-.kval{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--txt);line-height:1;margin-bottom:6px}
-.kval.sm{font-size:19px}
-.kchip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700}
-.kc-blue{background:var(--accent-light);color:var(--accent)}
-.kc-ok{background:var(--ok-light);color:var(--ok)}
-.kc-err{background:var(--err-light);color:var(--err)}
-.kc-teal{background:var(--teal-light);color:var(--teal)}
-
-/* ── CHARTS ── */
-.row{display:grid;gap:13px;margin-bottom:13px}
-.rgt{grid-template-columns:290px 1fr}
-.r2{grid-template-columns:1fr 1fr}
-.r1{grid-template-columns:1fr}
-.cc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:18px 18px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column}
-.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
-.ct{font-size:13px;font-weight:700;color:var(--txt)}
-.cs{font-size:10.5px;color:var(--muted);margin-top:2px}
-.cbdg{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
-
-/* GAUGE */
-.gwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:190px}
-.gcwrap{position:relative;width:100%;max-width:250px}
-.gover{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;width:100%}
-.gpct{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;line-height:1}
-.gmeta{font-size:10.5px;color:var(--muted);margin-top:3px}
-.gticks{display:flex;justify-content:space-between;padding:0 6px;width:100%;max-width:250px;margin-top:-4px}
-.gtick{font-size:9.5px;color:var(--muted);font-weight:600}
-
-/* STATES */
-.stwrap{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-.spin{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent-bright);
-  border-radius:50%;animation:sp .75s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.stitle{font-family:'Syne',sans-serif;font-size:19px;font-weight:800}
-.sdesc{font-size:13px;color:var(--muted);text-align:center;max-width:440px;line-height:1.65}
-.stimer{font-size:12px;color:var(--muted);font-weight:600}
-
-.footer{text-align:center;padding:14px;font-size:10.5px;color:var(--faint)}
-
-@media(max-width:1200px){.kgrid{grid-template-columns:repeat(3,1fr)}.rgt{grid-template-columns:1fr}.r2{grid-template-columns:1fr}}
-@media(max-width:860px){.main{padding:12px 12px 20px}.kgrid{grid-template-columns:repeat(2,1fr)}.ts{display:none}}
-@media(max-width:560px){.kgrid{grid-template-columns:1fr}.btn-e{display:none}}
-
-#gaugeChart{max-height:190px}
-#trendChart{max-height:255px}
-#projectChart{max-height:285px}
-#paretoChart{max-height:285px}
-#auditorChart{max-height:235px}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text-primary); }
+.header { background:linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%); padding:15px 30px; color:white; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; }
+.header h1 { font-family:'Syne',sans-serif; font-size:18px; }
+.main { padding:20px; max-width:1600px; margin:0 auto; }
+.kpi-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:20px; }
+.kpi-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-sm); border-top:4px solid var(--accent); }
+.kpi-lbl { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:5px; }
+.kpi-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+.row { display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px; }
+.chart-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; min-height:350px; }
+.ch-title { font-size:14px; font-weight:700; margin-bottom:15px; color:var(--navy); }
+.loader { position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="stLoading" class="stwrap">
-  <div class="spin"></div>
-  <p class="stitle">Carregando dados...</p>
-  <p class="sdesc">Buscando as abas da planilha. Isso pode levar alguns segundos.</p>
-  <p class="stimer" id="loadTimer"></p>
+<div id="loading" class="loader">
+    <div style="font-weight:bold; margin-bottom:10px;">📊 Carregando Dados da Qualidade...</div>
+    <div style="font-size:12px; color:gray;">Garantindo precisão nas contagens</div>
 </div>
 
-<!-- ERROR -->
-<div id="stError" class="stwrap" style="display:none">
-  <div style="font-size:48px">⚠️</div>
-  <p class="stitle" id="errTitle">Não foi possível carregar</p>
-  <p class="sdesc" id="errDesc">—</p>
-  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">
-    <button class="btn btn-g" style="background:var(--accent);color:#fff" onclick="loadAllData()">↺ Tentar novamente</button>
-    <button class="btn btn-g" onclick="showHelp()">❓ Ver instruções</button>
-  </div>
-  <div id="helpBox" style="display:none;background:#F8FAFC;border:1px solid var(--border);border-radius:var(--rs);
-    padding:16px;margin-top:10px;max-width:500px;font-size:12.5px;line-height:1.7;color:var(--txt2)">
-    <strong>Checklist de configuração:</strong><br>
-    1. Abra a planilha no Google Sheets<br>
-    2. Arquivo → Compartilhar → Publicar na web<br>
-    3. Selecione cada aba → formato CSV → clique Publicar<br>
-    4. Confirme que o link está acessível abrindo em aba anônima<br><br>
-    <strong>Para usar no Google Sites:</strong><br>
-    • Salve este arquivo no Google Drive<br>
-    • Publique via GitHub Pages ou similar<br>
-    • No Sites: Inserir → Incorporar → cole a URL pública
-  </div>
+<header class="header">
+    <h1>QA Dashboard Executivo</h1>
+    <div id="updateTime" style="font-size:12px; opacity:0.8;"></div>
+</header>
+
+<div class="main">
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-lbl">Total Re-Auditado</div>
+            <div class="kpi-val" id="kTotal">0</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:var(--success)">
+            <div class="kpi-lbl">QTD de Acertos</div>
+            <div class="kpi-val" id="kSim" style="color:var(--success)">0</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:var(--danger)">
+            <div class="kpi-lbl">Inconsistências</div>
+            <div class="kpi-val" id="kNao" style="color:var(--danger)">0</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:var(--purple)">
+            <div class="kpi-lbl">% Qualidade</div>
+            <div class="kpi-val" id="kPct">0%</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="chart-card">
+            <div class="ch-title">Qualidade por Projeto (%)</div>
+            <canvas id="chartProj"></canvas>
+        </div>
+        <div class="chart-card">
+            <div class="ch-title">Volume por Auditor (Contagem)</div>
+            <canvas id="chartAuditor"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="chart-card" style="grid-column: span 2;">
+            <div class="ch-title">Pareto: Motivos de Inconsistência</div>
+            <canvas id="chartPareto"></canvas>
+        </div>
+    </div>
 </div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none">
-  <header class="hdr">
-    <div class="hdr-l">
-      <div class="hdr-ico">📊</div>
-      <div>
-        <div class="hdr-title">QA Intelligence</div>
-        <div class="hdr-sub">Painel de Re-Auditoria · Tempo Real</div>
-      </div>
-    </div>
-    <div class="hdr-r">
-      <div class="ts">
-        <div class="ts-lbl">Última atualização</div>
-        <div class="ts-val" id="tsEl">—</div>
-      </div>
-      <button class="btn btn-g" onclick="loadAllData()">↺ Atualizar</button>
-      <button class="btn btn-e" onclick="exportCSV()">⬇ Exportar CSV</button>
-    </div>
-  </header>
-
-  <div class="main">
-
-    <!-- FILTROS -->
-    <div class="fwrap">
-      <div class="fg" style="max-width:180px">
-        <span class="fg-lbl">🔍 Chassi</span>
-        <input type="text" id="fChassi" class="fi" placeholder="Buscar chassi..." oninput="applyFilters()">
-      </div>
-      <div class="fdiv"></div>
-      <div class="fg" style="max-width:140px">
-        <span class="fg-lbl">📅 Início</span>
-        <input type="date" id="fDateS" class="fi" onchange="applyFilters()">
-      </div>
-      <div class="fg" style="max-width:140px">
-        <span class="fg-lbl">📅 Fim</span>
-        <input type="date" id="fDateE" class="fi" onchange="applyFilters()">
-      </div>
-      <div class="fdiv"></div>
-      <div class="fg" style="max-width:155px">
-        <span class="fg-lbl">🏭 Projeto</span>
-        <div class="ms-wrap">
-          <div class="ms-disp" id="msDisp" onclick="toggleMS()">
-            <span id="msText">Todos</span><span class="ms-arr">▾</span>
-          </div>
-          <div class="ms-dd" id="msDD"></div>
-        </div>
-      </div>
-      <div class="fg" style="max-width:165px">
-        <span class="fg-lbl">👤 Auditor</span>
-        <select id="fAuditor" class="fi" onchange="applyFilters()">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="fdiv"></div>
-      <button class="btn-rst" onclick="resetFilters()">✕ Limpar</button>
-    </div>
-
-    <!-- KPIs -->
-    <div class="kgrid">
-      <div class="kcard">
-        <div class="kbar kb-blue"></div>
-        <div class="kico ki-blue">📋</div>
-        <div class="klbl">Total Re-Auditado</div>
-        <div class="kval" id="kTotal">—</div>
-        <div class="kchip kc-blue">Sim + Não válidos</div>
-      </div>
-      <div class="kcard">
-        <div class="kbar" id="kQualBar"></div>
-        <div class="kico" id="kQualIco">✅</div>
-        <div class="klbl">% Qualidade Geral</div>
-        <div class="kval" id="kQual">—</div>
-        <div class="kchip" id="kQualChip">—</div>
-      </div>
-      <div class="kcard">
-        <div class="kbar kb-teal"></div>
-        <div class="kico ki-teal">🎯</div>
-        <div class="klbl">QTD de Acertos</div>
-        <div class="kval" id="kAcertos">—</div>
-        <div class="kchip kc-teal">respostas "Sim"</div>
-      </div>
-      <div class="kcard">
-        <div class="kbar kb-err"></div>
-        <div class="kico ki-err">❌</div>
-        <div class="klbl">Índice de Inconsistência</div>
-        <div class="kval" id="kNao">—</div>
-        <div class="kchip kc-err">respostas "Não"</div>
-      </div>
-      <div class="kcard">
-        <div class="kbar kb-pur"></div>
-        <div class="kico ki-pur">🏆</div>
-        <div class="klbl">Auditor Destaque</div>
-        <div class="kval sm" id="kAud">—</div>
-        <div class="kchip kc-blue" id="kAudChip">—</div>
-      </div>
-    </div>
-
-    <!-- Gauge + Tendência -->
-    <div class="row rgt">
-      <div class="cc">
-        <div class="ch">
-          <div><div class="ct">Indicador de Qualidade</div><div class="cs">Velocímetro vs Meta ≥ 95%</div></div>
-          <div class="cbdg" id="gBdg" style="background:#EDE9FE;color:#6D28D9">—</div>
-        </div>
-        <div class="gwrap">
-          <div class="gcwrap">
-            <canvas id="gaugeChart"></canvas>
-            <div class="gover">
-              <div class="gpct" id="gPct">—</div>
-              <div class="gmeta">Meta: 95%</div>
-            </div>
-          </div>
-          <div class="gticks">
-            <span class="gtick">0%</span><span class="gtick">50%</span><span class="gtick">100%</span>
-          </div>
-        </div>
-      </div>
-      <div class="cc">
-        <div class="ch">
-          <div><div class="ct">Evolução Temporal da Qualidade</div>
-          <div class="cs">% diária (Sim ÷ Total) vs linha de meta 95%</div></div>
-          <div class="cbdg" id="tBdg" style="background:var(--accent-light);color:var(--accent)">—</div>
-        </div>
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Projeto + Pareto -->
-    <div class="row r2">
-      <div class="cc">
-        <div class="ch"><div>
-          <div class="ct">Status por Projeto</div>
-          <div class="cs">Sim vs Não por montadora</div>
-        </div></div>
-        <canvas id="projectChart"></canvas>
-      </div>
-      <div class="cc">
-        <div class="ch"><div>
-          <div class="ct">Pareto de Erros</div>
-          <div class="cs">Motivos mais frequentes nas ocorrências "Não"</div>
-        </div></div>
-        <canvas id="paretoChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Auditor -->
-    <div class="row r1">
-      <div class="cc">
-        <div class="ch"><div>
-          <div class="ct">Volume por Auditor</div>
-          <div class="cs">Sim vs Não por membro da equipe</div>
-        </div></div>
-        <canvas id="auditorChart"></canvas>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-  <div class="footer">QA Intelligence · Contagem baseada exclusivamente na coluna "Auditoria está correta?" · v4.0</div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════
-     LIBS — carregadas via CDN com detecção de falha
-     ═══════════════════════════════════════════════════════ -->
-<script>
-// Fallback global: se após 20s ainda estiver carregando, mostra erro.
-window._loadDeadline = setTimeout(() => {
-  if (document.getElementById('stLoading').style.display !== 'none') {
-    showError('Tempo esgotado',
-      'O carregamento demorou mais de 20 segundos. Possíveis causas: ' +
-      'bloqueio de scripts pelo Google Sites (sandbox), sem acesso à internet, ' +
-      'ou planilha não publicada publicamente.');
-  }
-}, 20000);
-
-// Timer visual
-let _sec = 0;
-const _ti = setInterval(() => {
-  _sec++;
-  const el = document.getElementById('loadTimer');
-  if (el) el.textContent = `${_sec}s...`;
-}, 1000);
-
-function clearTimers() {
-  clearTimeout(window._loadDeadline);
-  clearInterval(_ti);
-}
-
-function showError(title, desc) {
-  clearTimers();
-  document.getElementById('stLoading').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('errTitle').textContent = title;
-  document.getElementById('errDesc').textContent  = desc;
-  document.getElementById('stError').style.display = 'flex';
-}
-
-function showHelp() {
-  const b = document.getElementById('helpBox');
-  b.style.display = b.style.display === 'none' ? 'block' : 'none';
-}
-</script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
-  onerror="showError('Biblioteca não carregou','O script PapaParse não pôde ser carregado. Se estiver no Google Sites, o sandbox pode estar bloqueando scripts externos. Tente hospedar o arquivo em outra plataforma (ex: GitHub Pages) e incorporar a URL.')">
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"
-  onerror="showError('Biblioteca não carregou','O script Chart.js não pôde ser carregado. Se estiver no Google Sites, o sandbox pode estar bloqueando scripts externos.')">
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"
-  onerror="showError('Biblioteca não carregou','O script chartjs-plugin-datalabels não pôde ser carregado.')">
-</script>
 
 <script>
-/* ══════════════════════════════════════════════
-   URLs das 4 abas publicadas como CSV
-   ══════════════════════════════════════════════ */
 const CSV_URLS = [
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=352996843&single=true&output=csv',
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=1439413758&single=true&output=csv',
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=1819995490&single=true&output=csv',
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=2022041798&single=true&output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=352996843&single=true&output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=1439413758&single=true&output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=1819995490&single=true&output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRy08WRcxagknb0ucDbTkvUyUW7hjqR2uAyHtaSqyZpIJIq8ejzTL-1F2ZC0M4spg8XUQIxBqNz38s_/pub?gid=2022041798&single=true&output=csv'
 ];
 
-/* ══════════════════════════════════════════════
-   UTILITÁRIOS
-   ══════════════════════════════════════════════ */
-const normKey = s =>
-  String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+let rawData = [];
+let charts = {};
 
-function parseDate(s) {
-  if (!s) return null; s = String(s).trim();
-  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return new Date(+m[3],+m[2]-1,+m[1]);
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) return new Date(+m[1],+m[2]-1,+m[3]);
-  return null;
-}
-const toISO = d => d
-  ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  : '';
-const fmtDate = d => d
-  ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-  : '—';
+// Configuração dos Rótulos de Dados
+const dlConfig = (maxVal) => ({
+    anchor: ctx => ctx.parsed.y > (maxVal * 0.15) ? 'center' : 'end',
+    align: ctx => ctx.parsed.y > (maxVal * 0.15) ? 'center' : 'top',
+    color: ctx => ctx.parsed.y > (maxVal * 0.15) ? '#FFFFFF' : '#0F172A',
+    font: { weight: 'bold', size: 12 },
+    formatter: val => Math.round(val)
+});
 
-/* ══════════════════════════════════════════════
-   MAPEAMENTO DE COLUNAS
-   ══════════════════════════════════════════════ */
-const COLS = {
-  projeto: ['projeto'],
-  dataAud: ['dataauditoria','datadaauditoria','dtauditoria','dtaud','dataaud'],
-  chassi:  ['chassi','chassis'],
-  auditor: ['auditor'],
-  correta: ['auditoriaestacorreta','auditoriaestacoreta','estacorreta','correta',
-            'auditoriaestaok','auditoriaestaokay','auditoriaestaocorreta'],
-  obs:     ['observacao','observacoes','obs'],
-};
-
-function buildHmap(headers) {
-  const m = {};
-  headers.forEach((h,i) => { if(h) m[normKey(h)] = i; });
-  return m;
-}
-function findCol(hmap, key) {
-  for (const a of (COLS[key]||[key])) if (hmap[a] !== undefined) return hmap[a];
-  for (const a of (COLS[key]||[key])) {
-    const f = Object.keys(hmap).find(h => h.includes(a)||a.includes(h));
-    if (f !== undefined) return hmap[f];
-  }
-  return undefined;
-}
-const getCell = (raw,hmap,key) => {
-  const i = findCol(hmap,key);
-  return i !== undefined ? String(raw[i]||'').trim() : '';
-};
-
-/* Interpreta a coluna-chave. Retorna 'sim', 'nao' ou null (descarta). */
-function normCorreta(s) {
-  const n = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  if (n==='sim'||n==='s'||n==='yes') return 'sim';
-  if (n==='nao'||n==='não'||n==='n'||n==='no') return 'nao';
-  return null;
-}
-
-/* ══════════════════════════════════════════════
-   DATA LAYER
-   ══════════════════════════════════════════════ */
-let allRows=[], filteredRows=[], charts={}, selectedProjects=new Set();
-
-function normalizeRow(raw, hmap) {
-  const correta = normCorreta(getCell(raw,hmap,'correta'));
-  if (!correta) return null;
-  const dataAud = parseDate(getCell(raw,hmap,'dataAud'));
-  return {
-    projeto: getCell(raw,hmap,'projeto'),
-    dataAud,
-    chassi:  getCell(raw,hmap,'chassi'),
-    auditor: getCell(raw,hmap,'auditor'),
-    correto: correta==='sim',
-    obs:     getCell(raw,hmap,'obs'),
-    isoAud:  toISO(dataAud),
-  };
-}
-
-/* fetch com timeout de 12 segundos por aba */
-function fetchWithTimeout(url, ms=12000) {
-  const ctrl = new AbortController();
-  const tid = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url + '&_ts=' + Date.now(), { cache:'no-store', signal:ctrl.signal })
-    .then(r => { clearTimeout(tid); if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-    .catch(e => { clearTimeout(tid); throw e; });
-}
-
-function parseCSV(txt) {
-  const first = txt.split('\n')[0]||'';
-  const delim = (first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':',';
-  return Papa.parse(txt, {delimiter:delim, skipEmptyLines:true, header:false}).data;
-}
-
-async function loadAllData() {
-  // Reset UI
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('stError').style.display   = 'none';
-  document.getElementById('stLoading').style.display = 'flex';
-  document.getElementById('loadTimer').textContent   = '';
-  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
-  charts={}; allRows=[];
-
-  // Reinicia timers
-  clearTimeout(window._loadDeadline);
-  window._loadDeadline = setTimeout(() => {
-    if (document.getElementById('stLoading').style.display !== 'none') {
-      showError('Tempo esgotado (20s)',
-        'Possíveis causas: (1) Google Sites está bloqueando os scripts externos via sandbox — ' +
-        'nesse caso hospede o arquivo em GitHub Pages ou similar e incorpore a URL no Sites; ' +
-        '(2) A planilha não está publicada publicamente; ' +
-        '(3) Sem conexão à internet no momento do carregamento.');
-    }
-  }, 20000);
-
-  let abas = 0, erros = [];
-  for (const url of CSV_URLS) {
+async function init() {
     try {
-      const txt  = await fetchWithTimeout(url);
-      const data = parseCSV(txt);
-      if (data.length < 2) { erros.push('aba vazia'); continue; }
-      const hmap = buildHmap(data[0]);
-      let added = 0;
-      for (let i=1;i<data.length;i++) {
-        const row = normalizeRow(data[i], hmap);
-        if (row) { allRows.push(row); added++; }
-      }
-      abas++;
-      console.log(`Aba ${abas}: ${added} linhas válidas carregadas.`);
-    } catch(e) {
-      erros.push(e.message||String(e));
-      console.warn('Erro na aba:', e);
-    }
-  }
-
-  clearTimers();
-
-  if (allRows.length === 0) {
-    const msgErro = erros.length
-      ? 'Detalhes técnicos: ' + erros.join(' | ')
-      : 'Nenhuma linha com "Sim" ou "Não" foi encontrada na coluna "Auditoria está correta?".';
-    showError(
-      abas===0 ? 'Não foi possível acessar as planilhas' : 'Dados não encontrados',
-      msgErro + '\n\nVerifique: planilha publicada como CSV? Coluna "Auditoria está correta?" com valores "Sim"/"Não"?'
-    );
-    return;
-  }
-
-  const now = new Date();
-  document.getElementById('tsEl').textContent =
-    fmtDate(now)+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-
-  populateFilters();
-  applyFilters();
-
-  document.getElementById('stLoading').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-}
-
-/* ══════════════════════════════════════════════
-   FILTROS
-   ══════════════════════════════════════════════ */
-function populateFilters() {
-  const projs=[...new Set(allRows.map(r=>r.projeto).filter(Boolean))].sort();
-  selectedProjects=new Set(projs);
-  document.getElementById('msDD').innerHTML=projs.map(p=>
-    `<label class="ms-opt"><input type="checkbox" value="${p}" checked onchange="onPC()"> ${p}</label>`
-  ).join('');
-  updMS();
-  const auds=[...new Set(allRows.map(r=>r.auditor).filter(Boolean))].sort();
-  document.getElementById('fAuditor').innerHTML=
-    '<option value="">Todos</option>'+auds.map(a=>`<option>${a}</option>`).join('');
-  const dates=allRows.map(r=>r.isoAud).filter(Boolean).sort();
-  if(dates.length){
-    document.getElementById('fDateS').value=dates[0];
-    document.getElementById('fDateE').value=dates[dates.length-1];
-  }
-}
-
-let msOpen=false;
-function toggleMS(){
-  msOpen=!msOpen;
-  document.getElementById('msDD').classList.toggle('open',msOpen);
-  document.getElementById('msDisp').classList.toggle('open',msOpen);
-  if(msOpen){
-    setTimeout(()=>{
-      const fn=e=>{
-        if(!document.getElementById('msDD').contains(e.target)&&
-           !document.getElementById('msDisp').contains(e.target)){
-          msOpen=false;
-          document.getElementById('msDD').classList.remove('open');
-          document.getElementById('msDisp').classList.remove('open');
-          document.removeEventListener('click',fn);
+        for (const url of CSV_URLS) {
+            const resp = await fetch(url + '&cache=' + Date.now(), { mode: 'cors' });
+            const text = await resp.text();
+            const json = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+            
+            // FILTRO DE OURO: Só considera se a coluna "Auditoria está correta?" (Index 5) for Sim ou Não
+            const valid = json.filter(row => {
+                const status = String(Object.values(row)[5] || "").toLowerCase().trim();
+                return status === 'sim' || status === 'não' || status === 'nao';
+            });
+            rawData = rawData.concat(valid);
         }
-      };
-      document.addEventListener('click',fn);
-    },0);
-  }
-}
-function onPC(){
-  const cs=document.querySelectorAll('#msDD input');
-  selectedProjects=new Set([...cs].filter(c=>c.checked).map(c=>c.value));
-  updMS(); applyFilters();
-}
-function updMS(){
-  const all=document.querySelectorAll('#msDD input').length, sel=selectedProjects.size;
-  document.getElementById('msText').textContent=
-    sel===0?'Nenhum':sel===all?'Todos':`${sel} selecionado${sel>1?'s':''}`;
-}
-function resetFilters(){
-  document.getElementById('fChassi').value='';
-  document.getElementById('fAuditor').value='';
-  const dates=allRows.map(r=>r.isoAud).filter(Boolean).sort();
-  if(dates.length){document.getElementById('fDateS').value=dates[0];document.getElementById('fDateE').value=dates[dates.length-1];}
-  document.querySelectorAll('#msDD input').forEach(c=>c.checked=true);
-  selectedProjects=new Set([...document.querySelectorAll('#msDD input')].map(c=>c.value));
-  updMS(); applyFilters();
-}
-function applyFilters(){
-  const ch=document.getElementById('fChassi').value.trim().toLowerCase();
-  const ds=document.getElementById('fDateS').value;
-  const de=document.getElementById('fDateE').value;
-  const au=document.getElementById('fAuditor').value;
-  filteredRows=allRows.filter(r=>{
-    if(ch&&!r.chassi.toLowerCase().includes(ch))return false;
-    if(ds&&r.isoAud&&r.isoAud<ds)return false;
-    if(de&&r.isoAud&&r.isoAud>de)return false;
-    if(selectedProjects.size>0&&!selectedProjects.has(r.projeto))return false;
-    if(au&&r.auditor!==au)return false;
-    return true;
-  });
-  renderKPIs(); renderCharts();
+        
+        updateDashboard();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('updateTime').innerText = "Última atualização: " + new Date().toLocaleTimeString();
+    } catch (e) {
+        document.getElementById('loading').innerText = "Erro ao carregar Planilhas. Verifique a Publicação.";
+    }
 }
 
-/* ══════════════════════════════════════════════
-   KPIs
-   ══════════════════════════════════════════════ */
-function renderKPIs(){
-  const tot=filteredRows.length;
-  const sim=filteredRows.filter(r=>r.correto).length;
-  const nao=tot-sim;
-  const pct=tot>0?sim/tot*100:0;
-  const above=pct>=95;
+function updateDashboard() {
+    const total = rawData.length;
+    const sim = rawData.filter(r => String(Object.values(r)[5]).toLowerCase().includes('sim')).length;
+    const nao = total - sim;
+    const pct = total > 0 ? ((sim / total) * 100).toFixed(1) : 0;
 
-  document.getElementById('kTotal').textContent   = tot.toLocaleString('pt-BR');
-  document.getElementById('kAcertos').textContent = sim.toLocaleString('pt-BR');
-  document.getElementById('kNao').textContent     = nao.toLocaleString('pt-BR');
-  document.getElementById('kQual').textContent    = pct.toFixed(1)+'%';
+    document.getElementById('kTotal').innerText = total;
+    document.getElementById('kSim').innerText = sim;
+    document.getElementById('kNao').innerText = nao;
+    document.getElementById('kPct').innerText = pct + "%";
 
-  document.getElementById('kQualBar').className='kbar '+(above?'kb-ok':'kb-err');
-  document.getElementById('kQualIco').className ='kico '+(above?'ki-ok':'ki-err');
-  document.getElementById('kQualIco').textContent= above?'✅':'⚠️';
-  const kc=document.getElementById('kQualChip');
-  kc.className  ='kchip '+(above?'kc-ok':'kc-err');
-  kc.textContent= above?'✓ Acima da meta (95%)':`▼ ${(95-pct).toFixed(1)}% abaixo da meta`;
-
-  const am={};
-  filteredRows.forEach(r=>{if(r.auditor)am[r.auditor]=(am[r.auditor]||0)+1;});
-  const top=Object.entries(am).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('kAud').textContent    =top?top[0].split(' ')[0]:'—';
-  document.getElementById('kAudChip').textContent=top?top[1]+' re-auditorias':'—';
+    renderProjectChart();
+    renderAuditorChart();
+    renderParetoChart();
 }
 
-/* ══════════════════════════════════════════════
-   GRÁFICOS
-   ══════════════════════════════════════════════ */
-const C={sim:'#059669',simBg:'rgba(5,150,105,0.85)',nao:'#DC2626',naoBg:'rgba(220,38,38,0.85)',
-         blue:'#0369A1',ref:'#F59E0B',grid:'#E8EEF5',txt:'#475569',w:'#fff'};
-const F={family:'DM Sans',size:11};
-const dC=id=>{if(charts[id]){try{charts[id].destroy()}catch(e){}delete charts[id];}};
-
-/* Rótulos de dados: dentro (branco) se ≥8% do max, fora (cor) se menor — barras verticais */
-function dlV(all, cIn, cOut){
-  const max=Math.max(...[].concat(...all).filter(v=>!isNaN(+v)).map(Number),1);
-  return{
-    anchor:c=>c.parsed.y>=max*.08?'center':'end',
-    align: c=>c.parsed.y>=max*.08?'center':'top',
-    color: c=>c.parsed.y>=max*.08?cIn:cOut,
-    font:{family:'DM Sans',size:10,weight:'700'},
-    formatter:v=>v>0?v.toLocaleString('pt-BR'):'',
-    display:c=>c.parsed.y>0,
-  };
-}
-/* Barras horizontais */
-function dlH(all, cIn, cOut){
-  const max=Math.max(...[].concat(...all).filter(v=>!isNaN(+v)).map(Number),1);
-  return{
-    anchor:c=>c.parsed.x>=max*.12?'center':'end',
-    align: c=>c.parsed.x>=max*.12?'center':'right',
-    color: c=>c.parsed.x>=max*.12?cIn:cOut,
-    font:{family:'DM Sans',size:10,weight:'700'},
-    formatter:v=>v>0?v.toLocaleString('pt-BR'):'',
-    display:c=>c.parsed.x>0,
-  };
-}
-
-function renderCharts(){renderGauge();renderTrend();renderProject();renderPareto();renderAuditor();}
-
-/* GAUGE */
-function renderGauge(){
-  dC('gauge');
-  const tot=filteredRows.length, sim=filteredRows.filter(r=>r.correto).length;
-  const pct=tot>0?sim/tot*100:0, above=pct>=95, color=above?C.sim:C.nao, val=Math.min(Math.max(pct,0),100);
-  document.getElementById('gPct').textContent=pct.toFixed(1)+'%';
-  document.getElementById('gPct').style.color=color;
-  const b=document.getElementById('gBdg');
-  b.textContent=above?'✓ META ATINGIDA':'⚠ ABAIXO DA META';
-  b.style.background=above?'#D1FAE5':'#FEE2E2';
-  b.style.color=above?'#047857':'#B91C1C';
-  charts.gauge=new Chart(document.getElementById('gaugeChart').getContext('2d'),{
-    type:'doughnut',
-    data:{datasets:[{data:[val,100-val],backgroundColor:[color,'#EFF3F8'],borderWidth:0,borderRadius:[6,0]}]},
-    options:{rotation:-90,circumference:180,cutout:'70%',responsive:true,maintainAspectRatio:true,
-      animation:{duration:900,easing:'easeInOutQuart'},
-      plugins:{legend:{display:false},datalabels:{display:false},
-        tooltip:{callbacks:{label:c=>c.dataIndex===0
-          ?`Qualidade: ${val.toFixed(1)}% (${sim} Sim de ${tot})`
-          :`Restante: ${(100-val).toFixed(1)}%`}}}}
-  });
-}
-
-/* TENDÊNCIA */
-function renderTrend(){
-  dC('trend');
-  const bd={};
-  filteredRows.forEach(r=>{
-    if(!r.isoAud)return;
-    if(!bd[r.isoAud])bd[r.isoAud]={sim:0,tot:0};
-    bd[r.isoAud].tot++;
-    if(r.correto)bd[r.isoAud].sim++;
-  });
-  const labs=Object.keys(bd).sort();
-  const pcts=labs.map(d=>bd[d].tot>0?+(bd[d].sim/bd[d].tot*100).toFixed(1):0);
-  const fmtL=labs.map(d=>{const[,m,dd]=d.split('-');return`${dd}/${m}`;});
-  document.getElementById('tBdg').textContent=labs.length+' dias com dados';
-  charts.trend=new Chart(document.getElementById('trendChart').getContext('2d'),{
-    type:'line',
-    data:{labels:fmtL,datasets:[
-      {label:'% Qualidade',data:pcts,borderColor:C.blue,backgroundColor:'rgba(3,105,161,0.07)',
-       fill:true,tension:.42,pointRadius:labs.length>60?2:5,pointHoverRadius:8,
-       pointBackgroundColor:C.blue,borderWidth:2.5,order:1,
-       datalabels:{display:labs.length<=31,anchor:'top',align:'top',color:C.blue,
-         font:{family:'DM Sans',size:9,weight:'700'},formatter:v=>v+'%'}},
-      {label:'Meta (95%)',data:labs.map(()=>95),borderColor:C.ref,borderDash:[7,4],
-       borderWidth:2,pointRadius:0,fill:false,tension:0,order:2,datalabels:{display:false}}
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{font:F,color:C.txt,boxWidth:12,padding:14}},
-        tooltip:{callbacks:{
-          label:c=>`${c.dataset.label}: ${c.parsed.y}%`,
-          afterLabel:c=>{if(c.datasetIndex===0&&labs[c.dataIndex]){
-            const d=bd[labs[c.dataIndex]];
-            return`  Sim: ${d.sim} | Não: ${d.tot-d.sim} | Total: ${d.tot}`;}}}}},
-      scales:{x:{grid:{color:C.grid},ticks:{font:F,color:C.txt,maxRotation:45,maxTicksLimit:20}},
-              y:{min:0,max:100,grid:{color:C.grid},ticks:{font:F,color:C.txt,callback:v=>v+'%'}}}},
-    plugins:[ChartDataLabels]
-  });
-}
-
-/* PROJETO */
-function renderProject(){
-  dC('project');
-  const projs=[...new Set(filteredRows.map(r=>r.projeto).filter(Boolean))].sort();
-  const simD=projs.map(p=>filteredRows.filter(r=>r.projeto===p&&r.correto).length);
-  const naoD=projs.map(p=>filteredRows.filter(r=>r.projeto===p&&!r.correto).length);
-  charts.project=new Chart(document.getElementById('projectChart').getContext('2d'),{
-    type:'bar',
-    data:{labels:projs,datasets:[
-      {label:'Conformes (Sim)',data:simD,backgroundColor:C.simBg,borderRadius:5,borderSkipped:false,
-       datalabels:dlV([simD,naoD],C.w,C.sim)},
-      {label:'Não Conformes (Não)',data:naoD,backgroundColor:C.naoBg,borderRadius:5,borderSkipped:false,
-       datalabels:dlV([simD,naoD],C.w,C.nao)},
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index'},
-      layout:{padding:{top:22}},
-      plugins:{legend:{labels:{font:F,color:C.txt,boxWidth:12,padding:12}},
-        tooltip:{callbacks:{label:c=>{
-          const tot=simD[c.dataIndex]+naoD[c.dataIndex];
-          const p=tot>0?(c.parsed.y/tot*100).toFixed(1):0;
-          return` ${c.dataset.label}: ${c.parsed.y}  (${p}%)`;
-        }}}},
-      scales:{x:{stacked:true,grid:{display:false},ticks:{font:F,color:C.txt}},
-              y:{stacked:true,grid:{color:C.grid},ticks:{font:F,color:C.txt}}}},
-    plugins:[ChartDataLabels]
-  });
-}
-
-/* PARETO */
-const STOP=new Set(['para','como','mais','isso','esse','essa','este','esta','pelo','pela',
-  'pelos','pelas','sobre','entre','muito','quando','tambem','sendo','desde','ainda','assim',
-  'mesmo','sera','seria','foram','item','campo','numero','data','valor','dias','mes','tipo',
-  'cod','linha','com','que','uma','dos','das','nos','nas','por','sem','mas','ate',
-  'seu','sua','seus','suas','nao','sim','obs']);
-
-function renderPareto(){
-  dC('pareto');
-  const naoObs=filteredRows.filter(r=>!r.correto&&r.obs&&r.obs.trim().length>1).map(r=>r.obs.trim());
-  if(!naoObs.length){
-    charts.pareto=new Chart(document.getElementById('paretoChart').getContext('2d'),{
-      type:'bar',
-      data:{labels:['Sem observações registradas'],datasets:[{data:[0],backgroundColor:'#E8EEF5',datalabels:{display:false}}]},
-      options:{plugins:{legend:{display:false}}},plugins:[ChartDataLabels]});
-    return;
-  }
-  const exact={};
-  naoObs.forEach(o=>{exact[o]=(exact[o]||0)+1;});
-  const rep=Object.values(exact).filter(v=>v>1).reduce((a,b)=>a+b,0);
-  let cats;
-  if(rep/naoObs.length>=0.5){
-    // Dados padronizados: agrupa por texto exato
-    cats=Object.entries(exact).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,c])=>({label:l,count:c}));
-  } else {
-    // Fallback: palavras mais frequentes
-    const wc={};
-    naoObs.forEach(o=>{
-      o.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-       .replace(/[^a-z\s]/g,' ').split(/\s+/)
-       .filter(w=>w.length>=4&&!STOP.has(w))
-       .forEach(w=>{wc[w]=(wc[w]||0)+1;});
+function renderProjectChart() {
+    const ctx = document.getElementById('chartProj');
+    const projs = [...new Set(rawData.map(r => r.Projeto))];
+    const values = projs.map(p => {
+        const sub = rawData.filter(r => r.Projeto === p);
+        const s = sub.filter(r => String(Object.values(r)[5]).toLowerCase().includes('sim')).length;
+        return ((s / sub.length) * 100).toFixed(1);
     });
-    cats=Object.entries(wc).sort((a,b)=>b[1]-a[1]).slice(0,10)
-      .map(([w,c])=>({label:w.charAt(0).toUpperCase()+w.slice(1),count:c}));
-  }
-  const pal=['#0369A1','#0284C7','#0EA5E9','#38BDF8','#7DD3FC','#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE'];
-  const counts=cats.map(c=>c.count), max=Math.max(...counts,1);
-  charts.pareto=new Chart(document.getElementById('paretoChart').getContext('2d'),{
-    type:'bar',
-    data:{labels:cats.map(c=>c.label),datasets:[{
-      label:'Ocorrências',data:counts,
-      backgroundColor:cats.map((_,i)=>pal[i%pal.length]),
-      borderRadius:6,borderSkipped:false,
-      datalabels:{
-        anchor:c=>c.parsed.x>=max*.12?'center':'end',
-        align: c=>c.parsed.x>=max*.12?'center':'right',
-        color: c=>c.parsed.x>=max*.12?C.w:C.blue,
-        font:{family:'DM Sans',size:10,weight:'700'},
-        formatter:v=>v>0?v.toLocaleString('pt-BR'):'',
-        display:c=>c.parsed.x>0,
-      }
-    }]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,
-      layout:{padding:{right:32}},
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>{
-          const p=naoObs.length>0?(c.parsed.x/naoObs.length*100).toFixed(1):0;
-          return` ${c.parsed.x} ocorrências  (${p}% dos erros)`;
-        }}}},
-      scales:{x:{grid:{color:C.grid},ticks:{font:F,color:C.txt}},
-              y:{grid:{display:false},ticks:{font:{...F,size:11},color:C.txt}}}},
-    plugins:[ChartDataLabels]
-  });
+
+    if(charts.proj) charts.proj.destroy();
+    charts.proj = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: projs,
+            datasets: [{ label: '% Qualidade', data: values, backgroundColor: '#0369A1' }]
+        },
+        plugins: [ChartDataLabels],
+        options: { 
+            maintainAspectRatio: false,
+            plugins: { datalabels: dlConfig(100), legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
 }
 
-/* AUDITOR */
-function renderAuditor(){
-  dC('auditor');
-  const am={};
-  filteredRows.forEach(r=>{if(!r.auditor)return;if(!am[r.auditor])am[r.auditor]={sim:0,nao:0};
-    if(r.correto)am[r.auditor].sim++;else am[r.auditor].nao++;});
-  const auds=Object.keys(am).sort((a,b)=>(am[b].sim+am[b].nao)-(am[a].sim+am[a].nao));
-  const simD=auds.map(a=>am[a].sim), naoD=auds.map(a=>am[a].nao);
-  charts.auditor=new Chart(document.getElementById('auditorChart').getContext('2d'),{
-    type:'bar',
-    data:{labels:auds,datasets:[
-      {label:'Conformes (Sim)',data:simD,backgroundColor:C.simBg,borderRadius:5,borderSkipped:false,
-       datalabels:dlV([simD,naoD],C.w,C.sim)},
-      {label:'Não Conformes (Não)',data:naoD,backgroundColor:C.naoBg,borderRadius:5,borderSkipped:false,
-       datalabels:dlV([simD,naoD],C.w,C.nao)},
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index'},
-      layout:{padding:{top:22}},
-      plugins:{legend:{labels:{font:F,color:C.txt,boxWidth:12,padding:12}},
-        tooltip:{callbacks:{label:c=>{
-          const tot=am[auds[c.dataIndex]].sim+am[auds[c.dataIndex]].nao;
-          const p=tot>0?(c.parsed.y/tot*100).toFixed(1):0;
-          return` ${c.dataset.label}: ${c.parsed.y}  (${p}%)`;
-        }}}},
-      scales:{x:{grid:{display:false},ticks:{font:F,color:C.txt}},
-              y:{grid:{color:C.grid},ticks:{font:F,color:C.txt}}}},
-    plugins:[ChartDataLabels]
-  });
+function renderAuditorChart() {
+    const ctx = document.getElementById('chartAuditor');
+    const auditors = [...new Set(rawData.map(r => r.Auditor))];
+    const values = auditors.map(a => rawData.filter(r => r.Auditor === a).length);
+    const max = Math.max(...values);
+
+    if(charts.aud) charts.aud.destroy();
+    charts.aud = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: auditors,
+            datasets: [{ label: 'Volume', data: values, backgroundColor: '#1E293B' }]
+        },
+        plugins: [ChartDataLabels],
+        options: { 
+            maintainAspectRatio: false,
+            plugins: { datalabels: dlConfig(max), legend: { display: false } }
+        }
+    });
 }
 
-/* EXPORTAR */
-function exportCSV(){
-  const h=['Projeto','Data Auditoria','Chassi','Auditor','Auditoria Correta?','Observação'];
-  const rows=filteredRows.map(r=>[r.projeto,fmtDate(r.dataAud),r.chassi,r.auditor,r.correto?'Sim':'Não',r.obs]);
-  const csv=[h,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`qa_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
+function renderParetoChart() {
+    const ctx = document.getElementById('chartPareto');
+    const motivos = {};
+    rawData.filter(r => !String(Object.values(r)[5]).toLowerCase().includes('sim')).forEach(r => {
+        const m = r.Observação || "Não Especificado";
+        motivos[m] = (motivos[m] || 0) + 1;
+    });
+
+    const sorted = Object.entries(motivos).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    const max = sorted.length > 0 ? sorted[0][1] : 0;
+
+    if(charts.pareto) charts.pareto.destroy();
+    charts.pareto = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(s => s[0]),
+            datasets: [{ label: 'Qtd Inconsistências', data: sorted.map(s => s[1]), backgroundColor: '#B91C1C' }]
+        },
+        plugins: [ChartDataLabels],
+        options: { 
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            plugins: { datalabels: dlConfig(max), legend: { display: false } }
+        }
+    });
 }
 
-/* INIT */
-loadAllData();
+init();
 </script>
 </body>
 </html>
